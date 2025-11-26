@@ -9,7 +9,7 @@ gym.register_envs(gymnasium_robotics)
 
 from sample_factory.utils.utils import is_module_available
 
-from sample_factory.algo.utils.hierarchical import HierarchicalWrapper
+from sol.hierarchical import HierarchicalWrapper
 from sample_factory.algo.utils.flat_intrinsic_rewards import FlatIntrinsicRewardsWrapper
 
 from sf_examples.mujoco.option_rewards import (
