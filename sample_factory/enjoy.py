@@ -218,8 +218,15 @@ def enjoy(cfg: Config) -> Tuple[StatusCode, float]:
                     print(f"\n\nExecuting policy {next_policy} for {num_option_steps} steps\n\n")
                     time.sleep(2)
                 #text_on_img = str(actions[-1].item())
-                actions = actions.squeeze()
-                actions = [actions]
+
+                # Need to transpose to [(env0_base, env0_policy), ...] for NonBatchedMultiAgentWrapper
+                # The wrapper will do action[0] to get the first env's tuple
+                if isinstance(actions, list):
+                    actions = list(zip(*actions))  # transpose
+                else:
+                    # For non-Tuple action spaces
+                    actions = actions.squeeze()
+                    actions = [actions]
             else:
                 text_on_img = None
 
