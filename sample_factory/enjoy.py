@@ -201,9 +201,20 @@ def enjoy(cfg: Config) -> Tuple[StatusCode, float]:
                 policies = env.env.env.policies
                 policy_indx = normalized_obs['current_policy'].int().item()
                 text_on_img = policies[policy_indx]
-                if text_on_img == 'controller':
-                    num_option_steps = 2 ** actions[0][2]
-                    next_policy = policies[actions[0][1]]
+
+                # (As indicated by SOL in the above TODO)
+                # After preprocess_actions, actions is a list:
+                # - actions[0]: base actions (shape: [num_envs, action_dim])
+                # - actions[1]: policy choices (shape: [num_envs])
+                # - actions[2]: option lengths (shape: [num_envs]) - only if adaptive
+                if text_on_img == 'controller' and len(actions) >= 2:
+                    next_policy = policies[actions[1][0]]  # Get policy choice for first env
+                    # Check if adaptive option lengths are enabled (actions list has 3 elements)
+                    if len(actions) >= 3:
+                        num_option_steps = 2 ** actions[2][0]  # Get option length for first env
+                    else:
+                        # Fixed option length
+                        num_option_steps = cfg.sol_num_option_steps
                     print(f"\n\nExecuting policy {next_policy} for {num_option_steps} steps\n\n")
                     time.sleep(2)
                 #text_on_img = str(actions[-1].item())
