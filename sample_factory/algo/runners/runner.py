@@ -391,7 +391,7 @@ class Runner(EventLoopObject, Configurable):
 
             for key, stat in self.policy_avg_stats.items():
                 if len(stat[policy_id]) >= stat[policy_id].maxlen or (
-                    len(stat[policy_id]) > 10 and self.total_train_seconds > 300
+                    len(stat[policy_id]) > 1 and self.total_train_seconds > 10
                 ):
                     stat_value = np.mean(stat[policy_id])
 
@@ -436,9 +436,9 @@ class Runner(EventLoopObject, Configurable):
                 approx_total_training_steps=self.env_steps.get(policy_id, 0),
                 reward_shaping=self.reward_shaping[policy_id],
                 # add more stats if needed (commented by default for efficiency)
-                # stats=self.stats,
-                # avg_stats=self.avg_stats,
-                # policy_avg_stats=self.policy_avg_stats,
+                stats=self.stats,
+                avg_stats=self.avg_stats,
+                policy_avg_stats=self.policy_avg_stats,
             )
 
         self.update_training_info.emit(training_info)

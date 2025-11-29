@@ -83,6 +83,10 @@ class HierarchicalWrapper(gym.Wrapper):
         self.controller_option_lengths = []
         self.controller_reward = 0
 
+        # track cumulative task and policy rewards for tensorboard logging
+        self.total_task_reward = 0
+        self.total_policy_reward = 0
+
         # first timestep uses controller policy
         self.current_policy = 'controller'
             
@@ -147,7 +151,7 @@ class HierarchicalWrapper(gym.Wrapper):
 
             rewards = info["intrinsic_rewards"]
             rewards['task_reward'] = task_reward
-                    
+
             # log the returns for each policy and metric, and increment the current policy's returns
             for metric in self.metrics:
                 self.policy_metrics[self.current_policy][metric] += rewards[metric]
@@ -155,6 +159,10 @@ class HierarchicalWrapper(gym.Wrapper):
             reward = np.sum(
                 [rewards[remove_digits(k)] * self.reward_scale[remove_digits(k)] for k in self.current_policy.split('+')]
             )
+
+            # Accumulate task_reward and policy_reward for episodic logging
+            self.total_task_reward += task_reward
+            self.total_policy_reward += reward
                     
             self._steps += 1
             self._num_option_steps += 1
@@ -170,10 +178,17 @@ class HierarchicalWrapper(gym.Wrapper):
             self.controller_reward += controller_reward
 
             if done or truncated:
-                
+                # Initialize episode_extra_stats if it doesn't exist
+                if 'episode_extra_stats' not in info:
+                    info['episode_extra_stats'] = {}
+
                 info['episode_extra_stats']['episode_controller_reward'] = self.controller_reward
                 info['episode_extra_stats']['controller_option_length_mean'] = np.mean(self.controller_option_lengths)
                 info['episode_extra_stats']['controller_option_length_std'] = np.std(self.controller_option_lengths)
+
+                # Add cumulative task_reward and policy_reward to episodic stats for tensorboard
+                info['episode_extra_stats']['episode_task_reward'] = self.total_task_reward
+                info['episode_extra_stats']['episode_policy_reward'] = self.total_policy_reward
                 
                 for metric in self.metrics:
                     for i, policy in enumerate(self.base_policies):
