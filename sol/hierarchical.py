@@ -149,6 +149,11 @@ class HierarchicalWrapper(gym.Wrapper):
             self.last_obs = observation.copy()
             self.last_info = info.copy()
 
+            # Check if skill returned zero action (skill completion signal)
+            action_is_zero = False
+            if isinstance(low_level_action, np.ndarray):
+                action_is_zero = np.allclose(low_level_action, 0.0)
+
             rewards = info["intrinsic_rewards"]
             rewards['task_reward'] = task_reward
 
@@ -167,7 +172,7 @@ class HierarchicalWrapper(gym.Wrapper):
             self._steps += 1
             self._num_option_steps += 1
 
-            if self._num_option_steps == self.current_option_length:
+            if action_is_zero or self._num_option_steps == self.current_option_length:
                 self.current_policy = 'controller'
 
             observation['current_policy'] = np.array([self.policies.index(self.current_policy)], dtype=np.uint8)
