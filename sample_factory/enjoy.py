@@ -8,7 +8,6 @@ import torch
 from torch import Tensor
 import cv2
 import pprint
-import gnuplotlib as gp
 import time
 
 from sample_factory.algo.learning.learner import Learner
@@ -73,7 +72,7 @@ def render_frame(cfg, env, video_frames, num_episodes, last_render_start, text=N
                 if text is not None:
                     H, W = frame.shape[:2]
                     org = (int(H*0.2), int(W*0.8))
-                    font_scale = 3
+                    font_scale = 1
                     color = (255, 0, 0)
                     thickness = 2
                     cv2.putText(frame, text, org, cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness, cv2.LINE_AA)
@@ -116,7 +115,7 @@ def load_state_dict(cfg: Config, actor_critic: ActorCritic, device: torch.device
 
 
 def enjoy(cfg: Config) -> Tuple[StatusCode, float]:
-    verbose = False
+    verbose = True
 
     #cfg = load_from_checkpoint(cfg)
 

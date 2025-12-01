@@ -66,7 +66,7 @@ class HierarchicalWrapper(gym.Wrapper):
 
     
     def reset(self, seed=None, options=None):
-        obs, info = self.env.reset()
+        obs, info = self.env.reset(seed=seed, options=options)
 
         self.last_obs = obs.copy()
         self.last_info = info.copy()
