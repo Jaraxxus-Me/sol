@@ -774,9 +774,17 @@ class Learner(Configurable):
 
                     controller_indx = num_policies - 1
 
-                    # check the controller rewards we are filling in match the expected placeholder value                    
-                    controller_reward_placeholder = -0.42 * self.cfg.reward_scale
-                    assert torch.all(rewards_cpu[policy_indx==controller_indx]==controller_reward_placeholder).item()
+                    # check the controller rewards we are filling in match the expected placeholder value
+                    controller_reward_placeholder = 0.0 * self.cfg.reward_scale
+                    controller_mask = policy_indx == controller_indx
+                    controller_rewards = rewards_cpu[controller_mask]
+                    if not torch.all(controller_rewards == controller_reward_placeholder).item():
+                        unique_vals = torch.unique(controller_rewards)
+                        raise AssertionError(
+                            f"Controller rewards should all be {controller_reward_placeholder}, "
+                            f"but found {len(unique_vals)} unique values: {unique_vals.tolist()}"
+                        )
+                    assert torch.all(controller_rewards == controller_reward_placeholder).item()
                     
                     
                     # next we fill in the rewards for the controller.
