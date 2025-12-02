@@ -12,6 +12,32 @@ import gymnasium as gym
 def remove_digits(s):
     return ''.join([c for c in s if not c.isdigit()])
 
+def get_reward_key(policy_name, reward_scale):
+    """Get reward scale key for a policy, preferring exact match over pattern match."""
+    if policy_name in reward_scale:
+        return policy_name
+    return remove_digits(policy_name)
+
+def get_metric_key(policy_name, rewards):
+    """Get metric key from rewards dict for a grounded policy name.
+
+    For grounded policies like 'skill_GraphPickUpSkill_robot_block1_table',
+    this returns the base skill name like 'skill_GraphPickUpSkill' if it exists
+    in the rewards dict, otherwise falls back to remove_digits.
+    """
+    if policy_name in rewards:
+        return policy_name
+
+    # Try to find base skill name by checking all keys in rewards
+    # For grounded skills like 'skill_GraphPickUpSkill_robot_block1_table',
+    # find matching base key like 'skill_GraphPickUpSkill'
+    for reward_key in rewards.keys():
+        if policy_name.startswith(reward_key + '_'):
+            return reward_key
+
+    # Fall back to remove_digits pattern
+    return remove_digits(policy_name)
+
 class HierarchicalWrapper(gym.Wrapper):
 
     def __init__(
@@ -24,7 +50,11 @@ class HierarchicalWrapper(gym.Wrapper):
     ):
         super().__init__(env)
 
-        assert all(remove_digits(p) in reward_scale.keys() for p in base_policies), (
+        # Check that each policy has a reward scale (exact match or pattern match)
+        assert all(
+            (p in reward_scale.keys()) or (remove_digits(p) in reward_scale.keys())
+            for p in base_policies
+        ), (
             f"base_policies ({base_policies}) must be in reward_scale dict: {reward_scale}"
         )
             
@@ -37,8 +67,9 @@ class HierarchicalWrapper(gym.Wrapper):
         self.controller_reward_key = controller_reward_key
 
         self.num_policy_steps = num_policy_steps
-        self.reward_scale = reward_scale        
-        self.metrics = list(set(remove_digits(p) for p in base_policies))
+        self.reward_scale = reward_scale
+        # Collect all unique reward keys (both exact and patterns)
+        self.metrics = list(set(get_reward_key(p, reward_scale) for p in base_policies))
 
         # update the action space to now include an extra action representing the option chosen by the controller. 
         if not isinstance(self.action_space, gym.spaces.Tuple):
@@ -159,10 +190,13 @@ class HierarchicalWrapper(gym.Wrapper):
 
             # log the returns for each policy and metric, and increment the current policy's returns
             for metric in self.metrics:
-                self.policy_metrics[self.current_policy][metric] += rewards[metric]
+                metric_key = get_metric_key(self.current_policy, rewards)
+                if metric_key in rewards:
+                    self.policy_metrics[self.current_policy][metric] += rewards[metric_key]
 
             reward = np.sum(
-                [rewards[remove_digits(k)] * self.reward_scale[remove_digits(k)] for k in self.current_policy.split('+')]
+                [rewards[get_metric_key(k, rewards)] * self.reward_scale[get_reward_key(k, self.reward_scale)]
+                 for k in self.current_policy.split('+')]
             )
 
             # Accumulate task_reward and policy_reward for episodic logging
@@ -178,7 +212,8 @@ class HierarchicalWrapper(gym.Wrapper):
             observation['current_policy'] = np.array([self.policies.index(self.current_policy)], dtype=np.uint8)
 
             controller_reward = np.sum(
-                [rewards[remove_digits(k)] * self.reward_scale[remove_digits(k)] for k in self.controller_reward_key.split('+')]
+                [rewards[get_metric_key(k, rewards)] * self.reward_scale[get_reward_key(k, self.reward_scale)]
+                 for k in self.controller_reward_key.split('+')]
             )
             self.controller_reward += controller_reward
 
@@ -210,8 +245,10 @@ class HierarchicalWrapper(gym.Wrapper):
                 if policy == 'controller':
                     observation['rewards'][self.policies.index('controller')] = controller_reward
                 else:
-                    observation['rewards'][self.policies.index(policy)] = np.sum([rewards[remove_digits(k)] * self.reward_scale[remove_digits(k)] for k in policy.split('+')])
-                    
+                    observation['rewards'][self.policies.index(policy)] = np.sum(
+                        [rewards[get_metric_key(k, rewards)] * self.reward_scale[get_reward_key(k, self.reward_scale)]
+                         for k in policy.split('+')])
+
             self.rewards = rewards
             #print(rewards, self.episode_controller_reward)
             return observation, reward, done, truncated, info
