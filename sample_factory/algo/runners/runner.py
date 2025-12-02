@@ -334,13 +334,23 @@ class Runner(EventLoopObject, Configurable):
             policy_lag_str,
         )
 
-        if "reward" in self.policy_avg_stats:
+        # Show task reward and policy reward instead of accumulated step rewards
+        # (accumulated rewards include placeholder controller rewards which are misleading)
+        if "episode_task_reward" in self.policy_avg_stats:
+            policy_task_reward_stats = []
+            for policy_id in range(self.cfg.num_policies):
+                task_reward_stats = self.policy_avg_stats["episode_task_reward"][policy_id]
+                if len(task_reward_stats) > 0:
+                    policy_task_reward_stats.append((policy_id, f"{np.mean(task_reward_stats):.3f}"))
+            log.debug("Avg episode task reward: %r", policy_task_reward_stats)
+
+        if "episode_policy_reward" in self.policy_avg_stats:
             policy_reward_stats = []
             for policy_id in range(self.cfg.num_policies):
-                reward_stats = self.policy_avg_stats["reward"][policy_id]
-                if len(reward_stats) > 0:
-                    policy_reward_stats.append((policy_id, f"{np.mean(reward_stats):.3f}"))
-            log.debug("Avg episode reward: %r", policy_reward_stats)
+                policy_reward_stats_data = self.policy_avg_stats["episode_policy_reward"][policy_id]
+                if len(policy_reward_stats_data) > 0:
+                    policy_reward_stats.append((policy_id, f"{np.mean(policy_reward_stats_data):.3f}"))
+            log.debug("Avg episode policy reward: %r", policy_reward_stats)
 
     def _update_stats_and_print_report(self):
         """

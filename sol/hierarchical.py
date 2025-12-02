@@ -147,8 +147,8 @@ class HierarchicalWrapper(gym.Wrapper):
             # switch the low-level policy, but otherwise no-op
 
             # we can't know the controller's reward yet, because it's in the future and depends on executing
-            # the chosen option. So mark it and compute it later in the learner thread. 
-            reward = -0.42
+            # the chosen option. So mark it as 0.0 and compute it later in the learner thread.
+            reward = 0.0
 
             # current policy selected by high-level action
             self.current_policy = self.base_policies[high_level_action]

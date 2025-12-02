@@ -154,31 +154,6 @@ class ActorCriticSharedWeights(ActorCritic):
 
         self.critic_linear = nn.Linear(decoder_out_size, 1)
         self.action_parameterization = self.get_action_parameterization(decoder_out_size)
-        self.skill_idx = 0
-        self.skill_sequence = [
-            "skill_GraphPickUpFromTargetSkill_robot_block2_target_area",
-            "skill_GraphPutDownSkill_robot_block2_table",
-            "skill_GraphPickUpSkill_robot_block1_table",
-            "skill_GraphPutDownOnTargetSkill_robot_block1_target_area",
-        ]
-        self.base_policies = ['skill_GraphPickUpSkill_robot_block1_table', 
-                              'skill_GraphPickUpSkill_robot_block1_target_area', 
-                              'skill_GraphPickUpSkill_robot_block2_table', 
-                              'skill_GraphPickUpSkill_robot_block2_target_area', 
-                              'skill_GraphPickUpFromTargetSkill_robot_block1_table', 
-                              'skill_GraphPickUpFromTargetSkill_robot_block1_target_area', 
-                              'skill_GraphPickUpFromTargetSkill_robot_block2_table', 
-                              'skill_GraphPickUpFromTargetSkill_robot_block2_target_area', 
-                              'skill_GraphPutDownSkill_robot_block1_table', 
-                              'skill_GraphPutDownSkill_robot_block1_target_area', 
-                              'skill_GraphPutDownSkill_robot_block2_table', 
-                              'skill_GraphPutDownSkill_robot_block2_target_area', 
-                              'skill_GraphPutDownOnTargetSkill_robot_block1_table', 
-                              'skill_GraphPutDownOnTargetSkill_robot_block1_target_area', 
-                              'skill_GraphPutDownOnTargetSkill_robot_block2_table', 
-                              'skill_GraphPutDownOnTargetSkill_robot_block2_target_area']
-
-        self.all_policies = self.base_policies + ['controller']
 
         self.apply(self.initialize_weights)
 
@@ -216,30 +191,6 @@ class ActorCriticSharedWeights(ActorCritic):
         x = self.forward_head(normalized_obs_dict)
         x, new_rnn_states = self.forward_core(x, rnn_states)
         result = self.forward_tail(x, values_only, sample_actions=True, action_mask=action_mask)
-        if 'actions' in result:
-            if 'current_policy' in normalized_obs_dict:
-                policy_idx = int(normalized_obs_dict['current_policy'][0])
-                current_policy = self.all_policies[policy_idx] if policy_idx < len(self.all_policies) else 'unknown'
-
-            if current_policy == 'controller':
-                if self.skill_idx >= len(self.skill_sequence):
-                    self.skill_idx = 0
-
-                next_skill = self.skill_sequence[self.skill_idx]
-                if next_skill not in self.base_policies:
-                    raise ValueError(f"Skill {next_skill} not in base_policies: {self.base_policies}")
-
-                policy_choice = self.base_policies.index(next_skill)
-                base_action = torch.zeros(3, dtype=new_rnn_states.dtype, device=new_rnn_states.device)
-                action = torch.concat([base_action, torch.tensor([policy_choice], dtype=new_rnn_states.dtype, device=new_rnn_states.device)], dim=0)
-                self.skill_idx += 1
-            else:
-                base_action = torch.zeros(3, dtype=new_rnn_states.dtype, device=new_rnn_states.device)
-                policy_choice = torch.tensor([-1], dtype=new_rnn_states.dtype, device=new_rnn_states.device)
-                action = torch.concat([base_action, torch.tensor([policy_choice], dtype=new_rnn_states.dtype, device=new_rnn_states.device)], dim=0)
-            policy_actions = torch.zeros_like(result['actions'])
-            policy_actions = action.unsqueeze(0).repeat(policy_actions.shape[0], 1)
-            result['actions'] = policy_actions
         result["new_rnn_states"] = new_rnn_states
         return result
 
