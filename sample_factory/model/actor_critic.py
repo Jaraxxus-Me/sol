@@ -219,6 +219,8 @@ class ActorCriticSharedWeights(ActorCritic):
                 policy_idx = int(normalized_obs_dict['current_policy'][0])
                 current_policy = self.all_policies[policy_idx] if policy_idx < len(self.all_policies) else 'unknown'
 
+            base_action_size = result['actions'].shape[1] - 1
+
             if current_policy == 'controller':
                 if self.skill_idx >= len(self.skill_sequence):
                     self.skill_idx = 0
@@ -228,13 +230,14 @@ class ActorCriticSharedWeights(ActorCritic):
                     raise ValueError(f"Skill {next_skill} not in base_policies: {self.base_policies}")
 
                 policy_choice = self.base_policies.index(next_skill)
-                base_action = torch.zeros(3, dtype=new_rnn_states.dtype, device=new_rnn_states.device)
+                base_action = torch.zeros(base_action_size, dtype=new_rnn_states.dtype, device=new_rnn_states.device)
                 action = torch.concat([base_action, torch.tensor([policy_choice], dtype=new_rnn_states.dtype, device=new_rnn_states.device)], dim=0)
                 self.skill_idx += 1
+                print(f"Switching to skill: {next_skill} (index {policy_choice})")
             else:
-                base_action = torch.zeros(3, dtype=new_rnn_states.dtype, device=new_rnn_states.device)
+                base_action = torch.zeros(base_action_size, dtype=new_rnn_states.dtype, device=new_rnn_states.device)
                 policy_choice = torch.tensor([-1], dtype=new_rnn_states.dtype, device=new_rnn_states.device)
-                action = torch.concat([base_action, torch.tensor([policy_choice], dtype=new_rnn_states.dtype, device=new_rnn_states.device)], dim=0)
+                action = torch.concat([base_action, policy_choice], dim=0)
             policy_actions = torch.zeros_like(result['actions'])
             policy_actions = action.unsqueeze(0).repeat(policy_actions.shape[0], 1)
             result['actions'] = policy_actions
