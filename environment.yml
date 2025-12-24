@@ -74,7 +74,6 @@ dependencies:
     - glfw==2.9.0
     - gnuplotlib==0.42
     - grpcio==1.73.0
-    - gymnasium==1.0.0
     - gymnasium-robotics==1.3.1
     - h11==0.16.0
     - hf-xet==1.1.3
