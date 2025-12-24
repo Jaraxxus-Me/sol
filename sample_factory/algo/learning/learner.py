@@ -1105,8 +1105,8 @@ class Learner(Configurable):
         stats.act_max = var.mb.actions.max()
 
         if "adv_mean" in stats:
-            stats.adv_min = var.mb.advantages.min()
-            stats.adv_max = var.mb.advantages.max()
+            stats.adv_min = var.adv.min()
+            stats.adv_max = var.adv.max()
             stats.adv_std = var.adv_std
             stats.adv_mean = var.adv_mean
 
