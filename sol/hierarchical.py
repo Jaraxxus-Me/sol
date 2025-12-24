@@ -8,6 +8,8 @@ import math
 import numpy as np
 import gymnasium as gym
 
+from skill_refactor import SOL_TERMINATE_ACTION
+
 
 def remove_digits(s):
     return ''.join([c for c in s if not c.isdigit()])
@@ -161,11 +163,13 @@ class HierarchicalWrapper(gym.Wrapper):
             observation['rewards'] = np.zeros(len(self.policies))
             observation['rewards'][self.policies.index('controller')] = reward
 
-            if self.num_policy_steps == -1:
-                self.current_option_length = 2 ** action[self._controller_option_length_index]
-            else:
-                self.current_option_length = self.num_policy_steps
-
+            # if self.num_policy_steps == -1:
+            #     self.current_option_length = 2 ** action[self._controller_option_length_index]
+            # else:
+            #     self.current_option_length = self.num_policy_steps
+            # NOTE: In Skill refactor, we don't predefine option lengths since skills determine their own termination.
+            # We will use info["skill_terminated"] to determine when a skill ends.
+            self.current_option_length = 10000
             self.controller_option_lengths.append(self.current_option_length)
             self._num_option_steps = 0
             
@@ -181,9 +185,9 @@ class HierarchicalWrapper(gym.Wrapper):
             self.last_info = info.copy()
 
             # Check if skill returned zero action (skill completion signal)
-            action_is_zero = False
-            if isinstance(low_level_action, np.ndarray):
-                action_is_zero = np.allclose(low_level_action, 0.0)
+            action_is_zero = high_level_action == SOL_TERMINATE_ACTION
+            # if isinstance(low_level_action, np.ndarray):
+            #     action_is_zero = np.allclose(low_level_action, 0.0)
 
             rewards = info["intrinsic_rewards"]
             rewards['task_reward'] = task_reward
