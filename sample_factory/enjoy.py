@@ -209,11 +209,12 @@ def enjoy(cfg: Config) -> Tuple[StatusCode, float]:
                 if text_on_img == 'controller' and len(actions) >= 2:
                     next_policy = policies[actions[1][0]]  # Get policy choice for first env
                     # Check if adaptive option lengths are enabled (actions list has 3 elements)
-                    if len(actions) >= 3:
-                        num_option_steps = 2 ** actions[2][0]  # Get option length for first env
-                    else:
-                        # Fixed option length
-                        num_option_steps = cfg.sol_num_option_steps
+                    # if len(actions) >= 3:
+                    #     num_option_steps = 2 ** actions[2][0]  # Get option length for first env
+                    # else:
+                    #     # Fixed option length
+                    #     num_option_steps = cfg.sol_num_option_steps
+                    num_option_steps = 10000  # effectively infinite for fixed-length options
                     print(f"\n\nExecuting policy {next_policy} for {num_option_steps} steps\n\n")
                     time.sleep(2)
                 #text_on_img = str(actions[-1].item())
@@ -228,18 +229,6 @@ def enjoy(cfg: Config) -> Tuple[StatusCode, float]:
                     actions = [actions]
             else:
                 text_on_img = None
-
-            if 'nethack' in str(env.unwrapped).lower():
-
-                if len(actions[0]) == 1:
-                #if len(actions) == 1:
-                    current_base_action = repr(env.unwrapped.actions[actions[0]])
-                else:
-                    #current_base_action = repr(env.unwrapped.actions[actions[0]])
-                    current_base_action = repr(env.unwrapped.actions[actions[0][0]])
-                action_list.append(current_base_action)
-                obs_list.append(bytes(obs['message'].cpu().numpy().astype(np.int8)).decode('utf-8').replace('\x00', ''))
-                obs_list2.append(obs['blstats'].cpu().numpy())
                 
 
             rnn_states = policy_outputs["new_rnn_states"]
@@ -299,8 +288,6 @@ def enjoy(cfg: Config) -> Tuple[StatusCode, float]:
                         pprint.pp(action_counts)
                         obs_counts = {obs: len([o for o in obs_list if o == obs]) for obs in set(obs_list)}
                         pprint.pp(obs_counts)
-                        
-                        import pdb; pdb.set_trace()
 
                 # if episode terminated synchronously for all agents, pause a bit before starting a new one
                 if all(dones):
