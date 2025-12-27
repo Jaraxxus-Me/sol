@@ -177,7 +177,9 @@ class ActorCriticSharedWeights(ActorCritic):
                               'skill_Place_robot_base_block_grasp_block',
                               'skill_Place_robot_grasp_block_base_block',
                               'skill_Place_robot_grasp_block_grasp_block',
+                              'skill_ReachToGrasp_Punch_robot_base_block_obstruction_rec',
                               'skill_ReachToGrasp_Punch_robot_grasp_block_obstruction_rec',
+                              'skill_Punch_robot_base_block_obstruction_rec',
                               'skill_Punch_robot_grasp_block_obstruction_rec']
         self.all_policies = self.base_policies + ['controller']
 
