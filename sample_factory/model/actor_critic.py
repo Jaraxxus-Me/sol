@@ -157,24 +157,28 @@ class ActorCriticSharedWeights(ActorCritic):
 
         self.skill_idx = 0
         self.skill_sequence = [
-            "skill_ReachToGraspSkill_robot_grasp_block",
-            "skill_GraspSkill_robot_grasp_block",
-            "skill_ReachToPlaceSkill_robot_grasp_block_base_block",
-            "skill_PlaceSkill_robot_grasp_block_base_block",
+            "skill_ReachToGrasp_Punch_robot_grasp_block_obstruction_rec",
+            "skill_Punch_robot_grasp_block_obstruction_rec",
+            "skill_ReachToGrasp_robot_grasp_block",
+            "skill_Grasp_robot_grasp_block",
+            "skill_ReachToPlace_robot_grasp_block_base_block",
+            "skill_Place_robot_grasp_block_base_block",
         ]
         self.base_policies = [
-                              'skill_ReachToGraspSkill_robot_base_block', 
-                              'skill_ReachToGraspSkill_robot_grasp_block', 
-                              'skill_ReachToPlaceSkill_robot_base_block_base_block', 
-                              'skill_ReachToPlaceSkill_robot_base_block_grasp_block', 
-                              'skill_ReachToPlaceSkill_robot_grasp_block_base_block', 
-                              'skill_ReachToPlaceSkill_robot_grasp_block_grasp_block', 
-                              'skill_GraspSkill_robot_base_block', 
-                              'skill_GraspSkill_robot_grasp_block', 
-                              'skill_PlaceSkill_robot_base_block_base_block', 
-                              'skill_PlaceSkill_robot_base_block_grasp_block', 
-                              'skill_PlaceSkill_robot_grasp_block_base_block', 
-                              'skill_PlaceSkill_robot_grasp_block_grasp_block']
+                              'skill_ReachToGrasp_robot_base_block',
+                              'skill_ReachToGrasp_robot_grasp_block',
+                              'skill_ReachToPlace_robot_base_block_base_block',
+                              'skill_ReachToPlace_robot_base_block_grasp_block',
+                              'skill_ReachToPlace_robot_grasp_block_base_block',
+                              'skill_ReachToPlace_robot_grasp_block_grasp_block',
+                              'skill_Grasp_robot_base_block',
+                              'skill_Grasp_robot_grasp_block',
+                              'skill_Place_robot_base_block_base_block',
+                              'skill_Place_robot_base_block_grasp_block',
+                              'skill_Place_robot_grasp_block_base_block',
+                              'skill_Place_robot_grasp_block_grasp_block',
+                              'skill_ReachToGrasp_Punch_robot_grasp_block_obstruction_rec',
+                              'skill_Punch_robot_grasp_block_obstruction_rec']
         self.all_policies = self.base_policies + ['controller']
 
         self.apply(self.initialize_weights)
