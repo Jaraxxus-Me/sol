@@ -7,8 +7,14 @@
 import math
 import numpy as np
 import gymnasium as gym
+import sys
 
 from skill_refactor import SOL_TERMINATE_ACTION
+
+def debug_log(msg):
+    """Print to both stdout and stderr with explicit flushing."""
+    print(msg, file=sys.stderr, flush=True)
+    sys.stderr.flush()
 
 
 def remove_digits(s):
@@ -122,7 +128,11 @@ class HierarchicalWrapper(gym.Wrapper):
 
         # first timestep uses controller policy
         self.current_policy = 'controller'
-            
+
+        debug_log(f"\n{'='*80}")
+        debug_log(f"[EPISODE] Starting new episode")
+        debug_log(f"{'='*80}")
+
         obs['current_policy'] = np.array([self.policies.index(self.current_policy)], dtype=np.uint8)
         obs['rewards'] = np.zeros(len(self.policies))
 
@@ -154,6 +164,7 @@ class HierarchicalWrapper(gym.Wrapper):
 
             # current policy selected by high-level action
             self.current_policy = self.base_policies[high_level_action]
+            debug_log(f"\n[CONTROLLER] Chose skill #{high_level_action}: {self.current_policy} (step {self._steps})")
             self.controller_actions.append(high_level_action)
 
             # same as the last obs, but we change the policy index to reflect the chosen sub-policy
@@ -211,6 +222,8 @@ class HierarchicalWrapper(gym.Wrapper):
             self._num_option_steps += 1
 
             if action_is_zero or self._num_option_steps == self.current_option_length:
+                reason = "zero_action" if action_is_zero else "max_steps"
+                debug_log(f"[CONTROLLER] Returning control from skill (reason: {reason}, steps: {self._num_option_steps})")
                 self.current_policy = 'controller'
 
             observation['current_policy'] = np.array([self.policies.index(self.current_policy)], dtype=np.uint8)
@@ -222,6 +235,18 @@ class HierarchicalWrapper(gym.Wrapper):
             self.controller_reward += controller_reward
 
             if done or truncated:
+                # Print episode summary
+                debug_log(f"\n{'='*80}")
+                debug_log(f"[EPISODE] Episode finished - {'DONE' if done else 'TRUNCATED'}")
+                debug_log(f"  Total steps: {self._steps}")
+                debug_log(f"  Task reward: {self.total_task_reward:.3f}")
+                debug_log(f"  Policy reward: {self.total_policy_reward:.3f}")
+                debug_log(f"  Skill sequence ({len(self.controller_actions)} skills chosen):")
+                for i, action_idx in enumerate(self.controller_actions):
+                    skill_name = self.base_policies[action_idx]
+                    debug_log(f"    {i+1}. {skill_name}")
+                debug_log(f"{'='*80}\n")
+
                 # Initialize episode_extra_stats if it doesn't exist
                 if 'episode_extra_stats' not in info:
                     info['episode_extra_stats'] = {}
@@ -233,7 +258,7 @@ class HierarchicalWrapper(gym.Wrapper):
                 # Add cumulative task_reward and policy_reward to episodic stats for tensorboard
                 info['episode_extra_stats']['episode_task_reward'] = self.total_task_reward
                 info['episode_extra_stats']['episode_policy_reward'] = self.total_policy_reward
-                
+
                 for metric in self.metrics:
                     for i, policy in enumerate(self.base_policies):
                         info['episode_extra_stats'][f'{policy}_{metric}'] = self.policy_metrics[policy][metric] / (self.controller_actions.count(i) + 1e-6)
