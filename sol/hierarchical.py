@@ -129,9 +129,9 @@ class HierarchicalWrapper(gym.Wrapper):
         # first timestep uses controller policy
         self.current_policy = 'controller'
 
-        debug_log(f"\n{'='*80}")
-        debug_log(f"[EPISODE] Starting new episode")
-        debug_log(f"{'='*80}")
+        # debug_log(f"\n{'='*80}")
+        # debug_log(f"[EPISODE] Starting new episode")
+        # debug_log(f"{'='*80}")
 
         obs['current_policy'] = np.array([self.policies.index(self.current_policy)], dtype=np.uint8)
         obs['rewards'] = np.zeros(len(self.policies))
@@ -164,7 +164,7 @@ class HierarchicalWrapper(gym.Wrapper):
 
             # current policy selected by high-level action
             self.current_policy = self.base_policies[high_level_action]
-            debug_log(f"\n[CONTROLLER] Chose skill #{high_level_action}: {self.current_policy} (step {self._steps})")
+            # debug_log(f"\n[CONTROLLER] Chose skill #{high_level_action}: {self.current_policy} (step {self._steps})")
             self.controller_actions.append(high_level_action)
 
             # same as the last obs, but we change the policy index to reflect the chosen sub-policy
@@ -223,7 +223,7 @@ class HierarchicalWrapper(gym.Wrapper):
 
             if action_is_zero or self._num_option_steps == self.current_option_length:
                 reason = "zero_action" if action_is_zero else "max_steps"
-                debug_log(f"[CONTROLLER] Returning control from skill (reason: {reason}, steps: {self._num_option_steps})")
+                # debug_log(f"[CONTROLLER] Returning control from skill (reason: {reason}, steps: {self._num_option_steps})")
                 self.current_policy = 'controller'
 
             observation['current_policy'] = np.array([self.policies.index(self.current_policy)], dtype=np.uint8)
