@@ -237,6 +237,7 @@ class HierarchicalWrapper(gym.Wrapper):
             if done or truncated:
                 # Print episode summary
                 debug_log(f"\n{'='*80}")
+                debug_log(f"[EPISODE] Episode length: {self._steps} steps")
                 debug_log(f"[EPISODE] Episode finished - {'DONE' if done else 'TRUNCATED'}")
                 debug_log(f"  Total steps: {self._steps}")
                 debug_log(f"  Task reward: {self.total_task_reward:.3f}")
